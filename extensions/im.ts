@@ -26,6 +26,7 @@ import { WeixinRuntime } from "../src/channels/weixin.js";
 import { weixinBeginLogin, weixinPollLogin } from "../src/channels/weixin-api.js";
 import { WhatsappRuntime } from "../src/channels/whatsapp.js";
 import { listBots, removeBot, saveBot } from "../src/store.js";
+import { registerDeliveryTools } from "../src/delivery.js";
 import type { BotConfig, ChannelId, ChannelRuntime, InboundMessage, RuntimeLogger } from "../src/types.js";
 import { showQrOverlay } from "../src/ui.js";
 
@@ -38,6 +39,8 @@ const log: RuntimeLogger = {
 export default function imExtension(pi: ExtensionAPI): void {
 	const bridge = new ImBridge(pi, log);
 	bridge.wire();
+	// 主动投递工具：im_bots / im_send（供 agent 与其他扩展如 daily-news 调用）
+	registerDeliveryTools(pi, { runtimes: () => bridge.listRuntimes(), registry: bridge.deliveryRegistry });
 	/** 活跃运行时，session_shutdown 时统一停止 */
 	const running = new Map<string, { runtime: ChannelRuntime; stop: () => Promise<void> }>();
 

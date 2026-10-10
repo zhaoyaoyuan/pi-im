@@ -4,6 +4,7 @@
  */
 import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { IM_HELP_TEXT, parseInbound } from "./commands.js";
+import { DeliveryRegistry } from "./delivery.js";
 import { routeKey, setLastRoute } from "./store.js";
 import type { ChannelRuntime, InboundMessage, Route, RuntimeLogger } from "./types.js";
 
@@ -15,6 +16,8 @@ export class ImBridge {
 	/** 命令上下文（含 newSession，仅命令处理器可获取） */
 	private commandCtx: ExtensionCommandContext | null = null;
 	private runtimes = new Map<string, ChannelRuntime>();
+	/** 主动投递目标记忆：每次入站消息更新（供 im_send 等投递方使用） */
+	readonly deliveryRegistry = new DeliveryRegistry();
 
 	constructor(
 		private readonly pi: ExtensionAPI,
@@ -70,6 +73,7 @@ export class ImBridge {
 
 	private async handleInboundAsync(msg: InboundMessage): Promise<void> {
 		const parsed = parseInbound(msg);
+		this.deliveryRegistry.remember(msg);
 		const runtime = this.runtimes.get(`${msg.route.channel}:${msg.route.botId}`);
 		const reply = async (text: string) => {
 			try {
