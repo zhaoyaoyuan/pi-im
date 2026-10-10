@@ -27,11 +27,10 @@
 pi install git:github.com/zhaoyaoyuan/pi-im
 ```
 
-安装后重启 pi。升级流程：
+安装后重启 pi。**升级提醒**：插件每次会话启动会自动检查 GitHub 最新 Release（每日最多一次），有新版时 pi 会弹出通知；也可随时运行 `/im version` 查看当前版本与最新 Release。手动升级：
 
 ```sh
-cd 本地仓库 && git pull   # 或本地改完 push 后
-pi update --extensions    # 同步 git 检出副本到最新
+pi update git:github.com/zhaoyaoyuan/pi-im   # 同步 git 检出到最新
 # 重启 pi
 ```
 
@@ -57,6 +56,7 @@ pi install ./pi-im
 /im disconnect [渠道]
 /im remove         移除机器人（删除凭据）
 /im test           向机器人最近聊天发连接测试消息
+/im version        查看当前版本与最新 Release（强制检查更新）
 ```
 
 绑定成功后：

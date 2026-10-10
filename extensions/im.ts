@@ -8,6 +8,7 @@
  *   /im connect|disconnect <channel> [botId]
  *   /im remove <channel> <botId>
  *   /im test           — 向最近聊天发送连接测试消息
+ *   /im version        — 查看当前版本与最新 Release（强制检查更新）
  */
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { ImBridge } from "../src/bridge.js";
@@ -27,6 +28,7 @@ import { weixinBeginLogin, weixinPollLogin } from "../src/channels/weixin-api.js
 import { WhatsappRuntime } from "../src/channels/whatsapp.js";
 import { listBots, removeBot, saveBot } from "../src/store.js";
 import { registerDeliveryTools } from "../src/delivery.js";
+import { checkForUpdate, localGitSha, remoteGitSha, updateNotification, UPGRADE_CMD } from "../src/update-check.js";
 import type { BotConfig, ChannelId, ChannelRuntime, InboundMessage, RuntimeLogger } from "../src/types.js";
 import { showQrOverlay } from "../src/ui.js";
 
@@ -538,8 +540,10 @@ export default function imExtension(pi: ExtensionAPI): void {
 					return removeFlow(ctx);
 				case "test":
 					return testConnections(ctx);
+				case "version":
+					return versionReport(ctx);
 				default:
-					ctx.ui.notify("用法: /im [bind|list|connect|disconnect|remove|test]", "info");
+					ctx.ui.notify("用法: /im [bind|list|connect|disconnect|remove|test|version]", "info");
 			}
 		},
 	});
@@ -646,10 +650,38 @@ export default function imExtension(pi: ExtensionAPI): void {
 		}
 	}
 
+	/** /im version：强制检查更新，显示版本与 git 差异 */
+	async function versionReport(ctx: ExtensionCommandContext): Promise<void> {
+		ctx.ui.notify("正在检查 pi-im 最新版本…", "info");
+		const [result, localSha, remoteSha] = await Promise.all([checkForUpdate(true), localGitSha(), remoteGitSha()]);
+		const lines = [`pi-im 当前版本: ${result.current}`];
+		if (result.latest) {
+			lines.push(`最新 Release: ${result.latest}${result.updateAvailable ? " 🆕（有新版）" : "（已是最新）"}`);
+		}
+		if (localSha || remoteSha) {
+			lines.push(`git: 本地 ${localSha ?? "?"} / 远端 main ${remoteSha ?? "?"}${localSha && remoteSha && localSha !== remoteSha ? " ⚠️ 落后" : ""}`);
+		}
+		if (result.updateAvailable) {
+			lines.push(`升级: ${UPGRADE_CMD}，然后重启 pi`);
+		}
+		if (result.error) lines.push(`检查失败: ${result.error}`);
+		ctx.ui.notify(lines.join("\n"), result.updateAvailable ? "warning" : "info");
+	}
+
 	// ---------- 生命周期 ----------
 
 	pi.on("session_start", async (_event, ctx) => {
 		if (ctx.mode === "tui" || ctx.mode === "rpc") {
+			// 更新自检：延迟后台执行，不阻塞启动；每日最多一次，每版本只通知一次
+			const timer = setTimeout(() => {
+				void checkForUpdate()
+					.then(updateNotification)
+					.then((msg) => {
+						if (msg) ctx.ui.notify(msg, "warning");
+					})
+					.catch(() => {});
+			}, 5_000);
+			timer.unref?.();
 			const bots = await listBots();
 			for (const b of bots) {
 				if (!b.enabled) continue;
