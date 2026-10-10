@@ -1,0 +1,36 @@
+{
+  "name": "@zhaoyaoyuan/pi-im",
+  "version": "0.1.0",
+  "description": "IM 机器人接入 pi：扫码绑定 Telegram / 飞书 / 钉钉，把 IM 消息桥接到 pi 会话并回发 AI 回复",
+  "type": "module",
+  "keywords": [
+    "pi-package"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/im.ts"
+    ]
+  },
+  "main": "extensions/im.ts",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.44.0",
+    "@tencent-connect/qqbot-connector": "^1.2.0",
+    "@tencent-connect/qqbot-nodejs": "^1.0.4",
+    "@wecom/aibot-node-sdk": "^1.0.7",
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
+    "dingtalk-stream": "^2.1.6-beta.1",
+    "qrcode": "^1.5.4"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.84.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.84.4",
+    "@types/node": "^22.10.0",
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.6.0"
+  }
+}
