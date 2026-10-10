@@ -21,15 +21,31 @@
 
 ## 安装
 
+### 推荐：从 GitHub 安装
+
 ```sh
-# 本地目录试用
+pi install git:github.com/zhaoyaoyuan/pi-im
+```
+
+安装后重启 pi。升级流程：
+
+```sh
+cd 本地仓库 && git pull   # 或本地改完 push 后
+pi update --extensions    # 同步 git 检出副本到最新
+# 重启 pi
+```
+
+### 开发：本地目录
+
+```sh
+# 单次试用（不写入 settings）
 pi -e ./pi-im
 
-# 或正式安装
+# 或正式安装本地路径
 pi install ./pi-im
 ```
 
-依赖会在安装时自动装入（`@larksuiteoapi/node-sdk`、`dingtalk-stream`、`qrcode`）。
+依赖（`@larksuiteoapi/node-sdk`、`dingtalk-stream`、`qrcode` 等）会在安装时自动装入。
 
 ## 使用
 
